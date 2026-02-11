@@ -28,22 +28,27 @@ async function extractTextFromFile(file: File): Promise<string> {
   return buffer.toString("utf-8");
 }
 
+function jsonError(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
+}
+
 export async function POST(req: Request) {
-  const ip = getRequestIp(req.headers);
-  if (!basicRateLimit(ip)) {
-    return new NextResponse("Rate limit exceeded", { status: 429 });
-  }
+  try {
+    const ip = getRequestIp(req.headers);
+    if (!basicRateLimit(ip)) {
+      return jsonError("Rate limit exceeded. Please wait a few minutes.", 429);
+    }
 
-  const contentType = req.headers.get("content-type") || "";
+    const contentType = req.headers.get("content-type") || "";
 
-  let name = "";
-  let mode: Mode = "PROPOSAL";
-  let templateRaw = "";
-  let callRaw = "";
-  let instructionsRaw = "";
+    let name = "";
+    let mode: Mode = "PROPOSAL";
+    let templateRaw = "";
+    let callRaw = "";
+    let instructionsRaw = "";
 
-  if (contentType.includes("multipart/form-data")) {
-    const form = await req.formData();
+    if (contentType.includes("multipart/form-data")) {
+      const form = await req.formData();
 
     name = (form.get("name")?.toString() || "").trim();
     mode = (form.get("mode")?.toString() === "TINDER" ? "TINDER" : "PROPOSAL") as Mode;
@@ -83,7 +88,7 @@ export async function POST(req: Request) {
     } | null;
 
     if (!body) {
-      return new NextResponse("Invalid JSON body", { status: 400 });
+      return jsonError("Invalid request body.", 400);
     }
 
     name = (body.name || "").trim();
@@ -94,34 +99,41 @@ export async function POST(req: Request) {
   }
 
   if (!name || !templateRaw.trim()) {
-    return new NextResponse("Missing required fields", { status: 400 });
+    return jsonError("Missing required fields: name and template are required.", 400);
   }
 
-  const sectionDefs = parseTemplateIntoSections(templateRaw);
-  const extracted = await extractInstructionsWithAI({
-    callText: callRaw,
-    instructionsText: instructionsRaw,
-    sectionTitles: sectionDefs.map((s) => s.title)
-  });
+    const sectionDefs = parseTemplateIntoSections(templateRaw);
+    const extracted = await extractInstructionsWithAI({
+      callText: callRaw,
+      instructionsText: instructionsRaw,
+      sectionTitles: sectionDefs.map((s) => s.title)
+    });
 
-  const project = await prisma.project.create({
-    data: {
-      name,
-      mode,
-      templateRaw,
-      callRaw,
-      instructionsRaw,
-      extractedInstructionsJSON: extracted,
-      sections: {
-        create: sectionDefs.map((s) => ({
-          title: s.title,
-          order: s.order
-        }))
-      }
-    },
-    select: { id: true }
-  });
+    const project = await prisma.project.create({
+      data: {
+        name,
+        mode,
+        templateRaw,
+        callRaw,
+        instructionsRaw,
+        extractedInstructionsJSON: extracted,
+        sections: {
+          create: sectionDefs.map((s) => ({
+            title: s.title,
+            order: s.order
+          }))
+        }
+      },
+      select: { id: true }
+    });
 
-  return NextResponse.json({ id: project.id });
+    return NextResponse.json({ id: project.id });
+  } catch (err: any) {
+    const message =
+      err?.message ||
+      (typeof err === "string" ? err : "Server error. Check the Codespace terminal for details.");
+    console.error("Project creation failed:", message, err);
+    return jsonError(message, 500);
+  }
 }
 

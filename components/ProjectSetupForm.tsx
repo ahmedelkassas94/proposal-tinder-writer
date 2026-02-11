@@ -64,14 +64,28 @@ export function ProjectSetupForm() {
         body: formData
       });
 
+      const text = await res.text();
+      const data = (() => {
+        try {
+          return JSON.parse(text) as { id?: string; error?: string; message?: string };
+        } catch {
+          return { error: text || `Server error (${res.status})` };
+        }
+      })();
       if (!res.ok) {
-        throw new Error(await res.text());
+        throw new Error(data?.error || data?.message || `Server error (${res.status})`);
       }
 
-      const json = (await res.json()) as { id: string };
+      const json = data as { id: string };
       router.push(`/project/${json.id}`);
     } catch (err: any) {
-      setError(err.message || "Failed to create project.");
+      const msg = err?.message || "Failed to create project.";
+      setError(
+        msg +
+          (msg.toLowerCase().includes("table") || msg.toLowerCase().includes("migrate")
+            ? " Run in Codespace terminal: npx prisma migrate deploy"
+            : "")
+      );
     } finally {
       setLoading(false);
     }
