@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build / Next
+.next/
+out/
+build/
+dist/
+
+# Env (secrets – use Codespaces secrets or .env.local)
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.db-journal
+
+# IDE / OS
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db
+
+# Portable runtime (optional – remove if you want to commit it)
+node-runtime/

@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image:
+    radial-gradient(circle at top left, rgba(244, 182, 97, 0.16), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(27, 121, 133, 0.20), transparent 55%);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.7);
+  border-radius: 9999px;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-accent/30 transition hover:-translate-y-[1px] hover:bg-[#16626e] hover:shadow-lg hover:shadow-accent/40 disabled:opacity-60 disabled:hover:translate-y-0;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-full border border-borderSoft bg-surface px-4 py-2 text-xs font-medium text-slate-600 shadow-sm hover:border-accent hover:text-accent transition;
+  }
+
+  .pill-tab {
+    @apply flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition;
+  }
+}
+

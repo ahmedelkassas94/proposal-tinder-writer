@@ -1,0 +1,35 @@
+{
+  "name": "proposal-tinder-writer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "autoprefixer": "^10.4.19",
+    "docx": "^9.0.3",
+    "mammoth": "^1.7.0",
+    "next": "14.1.0",
+    "pdf-parse": "^1.1.1",
+    "postcss": "^8.4.38",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.4.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.1.0",
+    "prisma": "^6.0.0",
+    "typescript": "^5.4.5"
+  }
+}
