@@ -1,0 +1,17 @@
+{
+  "name": "Proposal Writer",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bookworm",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "npm install && npx prisma generate",
+  "customizations": {
+    "vscode": {
+      "extensions": ["prisma.prisma", "bradlc.vscode-tailwindcss"]
+    }
+  }
+}
