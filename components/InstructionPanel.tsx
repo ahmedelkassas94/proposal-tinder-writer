@@ -17,6 +17,16 @@ type Props =
 
 export function InstructionPanel(props: Props) {
   const [query, setQuery] = useState("");
+  const rawSnippets = props.mode === "general" ? props.rawSnippets : [];
+  const filteredRaw = useMemo(
+    () =>
+      query
+        ? rawSnippets.filter((s) =>
+            s.text.toLowerCase().includes(query.toLowerCase())
+          )
+        : rawSnippets,
+    [rawSnippets, query]
+  );
 
   const filterList = (items: string[]) =>
     query
@@ -26,17 +36,7 @@ export function InstructionPanel(props: Props) {
       : items;
 
   if (props.mode === "general") {
-    const { general, rawSnippets } = props;
-
-    const filteredRaw = useMemo(
-      () =>
-        query
-          ? rawSnippets.filter((s) =>
-              s.text.toLowerCase().includes(query.toLowerCase())
-            )
-          : rawSnippets,
-      [rawSnippets, query]
-    );
+    const { general } = props;
 
     return (
       <div className="flex flex-col h-full border-l border-borderSoft bg-surface">
