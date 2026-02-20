@@ -1,7 +1,13 @@
 @echo off
 REM Double-click this file to start the app and open the browser.
+REM *** ON A COMPANY PC WHERE LOCALHOST IS BLOCKED: do NOT use this file.
+REM     Use GitHub Codespaces instead: https://github.com/ahmedelkassas94/proposal-tinder-writer
+REM     Code -> Codespaces -> Open existing or Create -> in terminal: npm run dev -> open the HTTPS link for port 3000.
 REM A black window will open for the server - leave it open.
 cd /d "%~dp0"
+echo.
+echo If you are on a COMPANY PC and localhost does not load, STOP. Use Codespaces instead - see RUN_ON_COMPANY_PC.md
+echo.
 
 set "NODE_DIR=%~dp0node-runtime\node-v20.11.1-win-x64"
 set "PATH=%NODE_DIR%;%PATH%"
