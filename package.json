@@ -2,18 +2,48 @@
   "name": "proposal-tinder-writer",
   "version": "1.0.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "electron:dev": "npm run build && electron .",
+    "electron:build": "npm run build && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.proposalwriter.app",
+    "productName": "Proposal Writer",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
+      "prisma/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "prisma",
+        "to": "prisma"
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "electron/icon.png"
+    }
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
     "autoprefixer": "^10.4.19",
     "docx": "^9.0.3",
+    "dotenv": "^17.3.1",
     "mammoth": "^1.7.0",
     "next": "14.1.0",
     "pdf-parse": "^1.1.1",
@@ -27,6 +57,8 @@
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.1.0",
     "prisma": "^6.0.0",

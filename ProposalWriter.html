@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposal & Tinder Writer</title>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- Quill Rich Text Editor -->
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #f0f4f8;
+      --fg: #0f172a;
+      --accent: #0d9488;
+      --accent-hover: #0f766e;
+      --accent-soft: #ccfbf1;
+      --accent-alt: #f59e0b;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --border: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --error: #dc2626;
+      --success: #16a34a;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s ease;
+      --transition-slow: 0.4s ease;
+    }
+    
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+    }
+    
+    /* Global Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--surface) 0%, var(--surface-muted) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { 
+      font-size: 20px; 
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-subtitle { 
+      font-size: 12px; 
+      color: #64748b; 
+      margin-top: 2px;
+      transition: color var(--transition-normal);
+    }
+    
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.4s, height 0.4s;
+    }
+    .btn:active::after {
+      width: 200px;
+      height: 200px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+    }
+    .btn-primary:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--fg);
+    }
+    .btn-ghost:hover { 
+      border-color: var(--accent); 
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .tab {
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+    .tab:hover { 
+      background: var(--accent-soft); 
+      color: var(--accent);
+    }
+    .tab.active { 
+      background: var(--accent); 
+      color: white;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+    }
+    
+    /* Views */
+    .view { 
+      display: none; 
+      padding: 24px 32px; 
+      animation: fadeInUp 0.3s ease;
+    }
+    .view.active { display: block; }
+    
+    /* Forms */
+    .form-group { 
+      margin-bottom: 24px;
+      animation: fadeInUp 0.3s ease backwards;
+    }
+    .form-group:nth-child(1) { animation-delay: 0.05s; }
+    .form-group:nth-child(2) { animation-delay: 0.1s; }
+    .form-group:nth-child(3) { animation-delay: 0.15s; }
+    .form-label { 
+      display: block; 
+      font-size: 13px; 
+      font-weight: 600; 
+      margin-bottom: 8px;
+      color: #374151;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      transition: all var(--transition-fast);
+    }
+    .form-input:hover, .form-textarea:hover {
+      border-color: var(--border-hover);
+    }
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    .form-textarea { min-height: 140px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    
+    /* File upload */
+    .upload-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      border: 1px dashed var(--border);
+      background: var(--surface-muted);
+      color: var(--accent);
+      transition: all 0.15s;
+    }
+    .upload-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .upload-btn input[type="file"] {
+      display: none;
+    }
+    .file-info {
+      font-size: 11px;
+      color: var(--success);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-info .remove-file {
+      color: var(--error);
+      cursor: pointer;
+      font-size: 10px;
+    }
+    .file-info .remove-file:hover { text-decoration: underline; }
+    .parsing-indicator {
+      font-size: 11px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-normal);
+      animation: fadeInScale 0.4s ease;
+    }
+    .card:hover {
+      box-shadow: var(--shadow-md);
+    }
+    .card-title { 
+      font-size: 18px; 
+      font-weight: 700; 
+      margin-bottom: 16px;
+      color: var(--fg);
+    }
+    
+    /* Editor Layout - Better proportions */
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 320px;
+      gap: 20px;
+      height: calc(100vh - 130px);
+      animation: fadeIn 0.4s ease;
+    }
+    
+    /* Section List */
+    .section-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-sm);
+      animation: slideInLeft 0.4s ease;
+    }
+    .section-list-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 16px;
+      padding: 0 8px;
+    }
+    .section-item {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: #475569;
+      margin-bottom: 4px;
+      display: block;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+    .section-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: height var(--transition-fast);
+    }
+    .section-item:hover { 
+      background: var(--accent-soft);
+      transform: translateX(4px);
+    }
+    .section-item:hover::before {
+      height: 60%;
+    }
+    .section-item.active { 
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+      transform: translateX(4px);
+    }
+    .section-item.active::before {
+      display: none;
+    }
+    .section-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .section-title-text {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chat-indicator {
+      font-size: 10px;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+    .section-item.active .chat-indicator {
+      opacity: 1;
+    }
+    
+    /* Editor Panel */
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+      animation: fadeInUp 0.4s ease 0.1s backwards;
+    }
+    .editor-main {
+      flex: 2.5;
+      min-height: 250px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    /* Resize Handle */
+    .resize-handle {
+      height: 10px;
+      background: linear-gradient(to bottom, var(--border), #d1d5db);
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .resize-handle:hover {
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+    }
+    .resize-handle::after {
+      content: '';
+      width: 50px;
+      height: 4px;
+      background: #94a3b8;
+      border-radius: 2px;
+      transition: all var(--transition-fast);
+    }
+    .resize-handle:hover::after {
+      background: white;
+      width: 60px;
+    }
+    .editor-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, var(--surface), var(--surface-muted));
+    }
+    .editor-title { 
+      font-size: 14px; 
+      font-weight: 700;
+      color: var(--fg);
+    }
+    .editor-status { 
+      font-size: 11px; 
+      color: #64748b;
+      padding: 4px 10px;
+      background: var(--surface-muted);
+      border-radius: 20px;
+    }
+    .editor-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .editor-container.hidden {
+      display: none;
+    }
+    .editor-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 14px;
+      gap: 8px;
+    }
+    .editor-placeholder.hidden {
+      display: none;
+    }
+    
+    /* Quill Editor Styling */
+    #editorToolbar {
+      border: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      background: var(--surface-muted) !important;
+      padding: 10px 12px !important;
+    }
+    #editorToolbar .ql-formats {
+      margin-right: 12px;
+    }
+    #editorQuill {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    #editorQuill .ql-editor {
+      padding: 20px 24px;
+      min-height: 100%;
+    }
+    #editorQuill .ql-editor.ql-blank::before {
+      color: #94a3b8;
+      font-style: normal;
+    }
+    .ql-toolbar.ql-snow {
+      border: none !important;
+      background: var(--surface-muted);
+    }
+    .ql-container.ql-snow {
+      border: none !important;
+    }
+    .ql-snow .ql-picker {
+      color: #475569;
+    }
+    .ql-snow .ql-stroke {
+      stroke: #475569;
+    }
+    .ql-snow .ql-fill {
+      fill: #475569;
+    }
+    .ql-snow button:hover .ql-stroke,
+    .ql-snow .ql-picker-label:hover .ql-stroke {
+      stroke: var(--accent) !important;
+    }
+    .ql-snow button:hover .ql-fill,
+    .ql-snow .ql-picker-label:hover .ql-fill {
+      fill: var(--accent) !important;
+    }
+    .ql-snow button.ql-active .ql-stroke {
+      stroke: var(--accent) !important;
+    }
+    .ql-snow button.ql-active .ql-fill {
+      fill: var(--accent) !important;
+    }
+    
+    /* Chat Panel */
+    .chat-panel {
+      flex: 1;
+      min-height: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 16px 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .chat-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      background: linear-gradient(to bottom, var(--surface), var(--surface-muted));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-header::before {
+      content: '🤖';
+      font-size: 16px;
+    }
+    .chat-actions {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex-shrink: 0;
+      background: var(--surface-muted);
+    }
+    .chat-action {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: #475569;
+      transition: all var(--transition-fast);
+    }
+    .chat-action:hover { 
+      border-color: var(--accent); 
+      color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+    }
+    .chat-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .chat-messages {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--surface-muted);
+    }
+    .chat-message {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+      animation: fadeInUp 0.3s ease;
+    }
+    .chat-message.user {
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-message.assistant {
+      background: var(--surface);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .chat-input-row {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 13px;
+      background: var(--surface-muted);
+      transition: all var(--transition-fast);
+    }
+    .chat-input:hover {
+      border-color: var(--border-hover);
+    }
+    .chat-input:focus { 
+      outline: none; 
+      border-color: var(--accent);
+      background: white;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    .chat-input::placeholder { color: #94a3b8; }
+    .chat-input:disabled { background: #f1f5f9; cursor: not-allowed; }
+    
+    .chat-message.thinking {
+      color: #64748b;
+      font-style: italic;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    .chat-message.suggested {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      max-width: 95%;
+    }
+    .suggested-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #16a34a;
+      margin-bottom: 8px;
+    }
+    .suggested-content {
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 8px;
+    }
+    .suggested-preview {
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 8px;
+    }
+    .suggested-preview h1, .suggested-preview h2, .suggested-preview h3 {
+      margin-top: 0.5em;
+      margin-bottom: 0.3em;
+      color: #1e40af;
+    }
+    .suggested-preview h2 { font-size: 1.2em; }
+    .suggested-preview h3 { font-size: 1.1em; }
+    .suggested-preview p { margin: 0.5em 0; }
+    .suggested-preview ul, .suggested-preview ol { 
+      margin: 0.5em 0; 
+      padding-left: 1.5em; 
+    }
+    .suggested-code {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .suggested-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11px;
+    }
+    .btn-xs {
+      padding: 2px 8px;
+      font-size: 10px;
+    }
+    .btn-secondary {
+      background: var(--surface-muted);
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+    
+    /* Instructions Panel */
+    .instructions-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      animation: slideInRight 0.4s ease 0.2s backwards;
+    }
+    .instructions-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .instructions-title::before {
+      content: '📋';
+      font-size: 14px;
+    }
+    
+    /* Instruction Groups */
+    .instructions-group {
+      margin-bottom: 16px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .instructions-group.section-specific {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      padding: 12px;
+    }
+    .instructions-group.general {
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+    }
+    .instructions-group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .instructions-group.section-specific .instructions-group-header {
+      color: #16a34a;
+      padding: 0 0 10px 0;
+      cursor: default;
+    }
+    .instructions-group.general .instructions-group-header {
+      background: var(--surface-muted);
+      color: var(--fg);
+      border-bottom: 1px solid var(--border);
+    }
+    .instructions-group.general .instructions-group-header:hover {
+      background: #e2e8f0;
+    }
+    .instructions-group-icon {
+      font-size: 14px;
+    }
+    .collapse-icon {
+      margin-left: auto;
+      font-size: 10px;
+      color: #64748b;
+    }
+    #generalInstructionsBody {
+      padding: 12px;
+    }
+    
+    /* Instruction Highlights */
+    .instruction-highlight {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      margin-right: 6px;
+    }
+    .instruction-highlight.weight {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .instruction-section { margin-bottom: 12px; }
+    .instruction-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .instructions-group.section-specific .instruction-section-title {
+      color: #15803d;
+    }
+    .instruction-item {
+      font-size: 12px;
+      padding: 6px 10px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      border: 1px solid #e5e7eb;
+    }
+    .instructions-group.section-specific .instruction-item {
+      background: white;
+      border-color: #bbf7d0;
+    }
+    .instruction-empty {
+      font-size: 11px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+    .instruction-note {
+      font-size: 11px;
+      color: #0369a1;
+      background: #e0f2fe;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+    
+    /* Projects List */
+    .projects-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .project-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      transition: all var(--transition-normal);
+      cursor: pointer;
+      animation: fadeInUp 0.4s ease backwards;
+    }
+    .project-card:nth-child(1) { animation-delay: 0.05s; }
+    .project-card:nth-child(2) { animation-delay: 0.1s; }
+    .project-card:nth-child(3) { animation-delay: 0.15s; }
+    .project-card:nth-child(4) { animation-delay: 0.2s; }
+    .project-card:nth-child(5) { animation-delay: 0.25s; }
+    .project-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .project-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+      transition: transform var(--transition-fast);
+    }
+    .project-card:hover .project-icon {
+      transform: scale(1.05) rotate(2deg);
+    }
+    .project-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .project-name {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--fg);
+    }
+    .project-meta {
+      font-size: 13px;
+      color: #64748b;
+    }
+    .project-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .project-action-btn {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: white;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .project-action-btn:hover {
+      transform: translateY(-1px);
+    }
+    .project-action-btn.open {
+      background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+    }
+    .project-action-btn.open:hover {
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+    }
+    .project-action-btn.delete {
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+    .project-action-btn.delete:hover {
+      background: #fee2e2;
+      border-color: #dc2626;
+    }
+    
+    /* API Key Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+      animation: fadeInScale 0.3s ease;
+    }
+    .modal-title { 
+      font-size: 20px; 
+      font-weight: 700; 
+      margin-bottom: 20px;
+      color: var(--fg);
+    }
+    
+    /* Alerts */
+    .alert {
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.3s ease;
+    }
+    .alert-error { 
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border: 1px solid #fecaca; 
+      color: var(--error); 
+    }
+    .alert-success { 
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 1px solid #bbf7d0; 
+      color: var(--success); 
+    }
+    
+    /* Loading */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Smooth scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--surface-muted);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    
+    /* Focus visible for accessibility */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #64748b;
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .empty-state-text {
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div>
+      <h1>Proposal & Tinder Writer</h1>
+      <div class="header-subtitle" id="currentProjectName">Draft proposals with AI assistance</div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="btn btn-ghost" onclick="showApiKeyModal()">API Key</button>
+      <button class="btn btn-secondary" id="saveBtn" onclick="manualSave()" style="display: none;">💾 Save</button>
+      <button class="btn btn-primary" id="exportBtn" onclick="exportToWord()" style="display: none;">Export .docx</button>
+    </div>
+  </header>
+  
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-view="projects">My Projects</button>
+    <button class="tab" data-view="setup">New Project</button>
+    <button class="tab" data-view="editor">Editor</button>
+  </div>
+  
+  <!-- Projects View -->
+  <div id="view-projects" class="view active">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div class="card">
+        <div class="card-title">My Projects</div>
+        <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">
+          Select a project to continue working on it, or create a new one.
+        </p>
+        
+        <div id="projectsList" class="projects-list">
+          <p class="instruction-empty">No saved projects yet. Create a new project to get started.</p>
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+          <button class="btn btn-primary" onclick="document.querySelector('[data-view=setup]').click()">
+            + Create New Project
+          </button>
+          <button class="btn btn-secondary" onclick="clearAllProjects()" style="margin-left: 10px;">
+            Clear All Projects
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Setup View -->
+  <div id="view-setup" class="view">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div class="card">
+        <div class="card-title">Create New Project</div>
+        
+        <div class="form-group">
+          <label class="form-label">Project Name</label>
+          <input type="text" id="projectName" class="form-input" placeholder="e.g. Horizon Europe AI Healthcare">
+        </div>
+        
+        <div class="form-row">
+          <!-- Template -->
+          <div class="form-group">
+            <div class="upload-row">
+              <span class="form-label" style="margin-bottom: 0;">Application Template</span>
+              <label class="upload-btn">
+                📄 Upload file
+                <input type="file" accept=".txt,.pdf,.doc,.docx" onchange="handleFileUpload(this, 'template')">
+              </label>
+            </div>
+            <div id="templateFileInfo" class="file-info" style="display: none;"></div>
+            <div id="templateParsing" class="parsing-indicator" style="display: none;">
+              <span class="spinner"></span> Parsing file...
+            </div>
+            <textarea id="templateText" class="form-textarea" placeholder="Paste your proposal template here...
+
+Example:
+# 1. Executive Summary
+# 2. Technical Approach
+# 3. Team
+# 4. Budget"></textarea>
+          </div>
+          
+          <!-- Call Text -->
+          <div class="form-group">
+            <div class="upload-row">
+              <span class="form-label" style="margin-bottom: 0;">Call Text</span>
+              <label class="upload-btn">
+                📄 Upload file
+                <input type="file" accept=".txt,.pdf,.doc,.docx" onchange="handleFileUpload(this, 'call')">
+              </label>
+            </div>
+            <div id="callFileInfo" class="file-info" style="display: none;"></div>
+            <div id="callParsing" class="parsing-indicator" style="display: none;">
+              <span class="spinner"></span> Parsing file...
+            </div>
+            <textarea id="callText" class="form-textarea" placeholder="Paste the call for proposals text...
+
+Include requirements, deadlines, evaluation criteria, etc."></textarea>
+          </div>
+          
+          <!-- Instructions -->
+          <div class="form-group">
+            <div class="upload-row">
+              <span class="form-label" style="margin-bottom: 0;">Other Instructions</span>
+              <label class="upload-btn">
+                📄 Upload file
+                <input type="file" accept=".txt,.pdf,.doc,.docx" onchange="handleFileUpload(this, 'instructions')">
+              </label>
+            </div>
+            <div id="instructionsFileInfo" class="file-info" style="display: none;"></div>
+            <div id="instructionsParsing" class="parsing-indicator" style="display: none;">
+              <span class="spinner"></span> Parsing file...
+            </div>
+            <textarea id="instructionsText" class="form-textarea" placeholder="Any additional instructions or notes...
+
+e.g. word limits, formatting rules, things to avoid"></textarea>
+          </div>
+        </div>
+        
+        <div id="setupError" class="alert alert-error" style="display: none;"></div>
+        
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-primary" id="createProjectBtn" onclick="createProject(true)">
+            Create Project & Extract Instructions
+          </button>
+          <button class="btn btn-ghost" id="quickCreateBtn" onclick="createProject(false)">
+            Quick Create (Skip Instructions)
+          </button>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">
+          Quick Create will only extract sections. You can always extract instructions later.
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editor View -->
+  <div id="view-editor" class="view">
+    <div class="editor-layout">
+      <!-- Left: Section List -->
+      <div class="section-list">
+        <div class="section-list-title">Sections</div>
+        <div id="sectionList"></div>
+      </div>
+      
+      <!-- Middle: Editor + Chat -->
+      <div class="editor-panel">
+        <div class="editor-main">
+          <div class="editor-header">
+            <div class="editor-title" id="editorTitle">Select a section</div>
+            <div class="editor-status" id="editorStatus"></div>
+          </div>
+          <div class="editor-container" id="editorContainer">
+            <div id="editorToolbar"></div>
+            <div id="editorQuill"></div>
+          </div>
+          <div class="editor-placeholder" id="editorPlaceholder">
+            <div class="empty-state-icon">📝</div>
+            <div>Select a section from the left to start editing</div>
+          </div>
+        </div>
+        
+        <div class="resize-handle" id="resizeHandle" title="Drag to resize • Double-click to reset"></div>
+        
+        <div class="chat-panel">
+          <div class="chat-header">AI Assistant</div>
+          <div class="chat-actions" id="chatActions">
+            <button class="chat-action" onclick="aiAction('Suggest an outline for this section')">Suggest outline</button>
+            <button class="chat-action" onclick="aiAction('Improve clarity and coherence')">Improve clarity</button>
+            <button class="chat-action" onclick="aiAction('Make more persuasive')">More persuasive</button>
+            <button class="chat-action" onclick="aiAction('Fit to evaluation criteria')">Fit criteria</button>
+            <button class="chat-action" onclick="aiAction('Reduce to word limit')">Reduce length</button>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input-row">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask AI for help..." onkeypress="if(event.key==='Enter')sendChat()">
+            <button class="btn btn-primary" onclick="sendChat()">Send</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right: Instructions -->
+      <div class="instructions-panel">
+        <div class="instructions-title">Instructions</div>
+        <div id="instructionsContent">
+          <p class="instruction-empty">Create a project to see extracted instructions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- API Key Modal -->
+  <div class="modal-overlay hidden" id="apiKeyModal">
+    <div class="modal">
+      <div class="modal-title">OpenAI API Key</div>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
+        Enter your OpenAI API key. It's stored only in your browser's localStorage.
+      </p>
+      <div class="form-group">
+        <input type="password" id="apiKeyInput" class="form-input" placeholder="sk-...">
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button class="btn btn-ghost" onclick="hideApiKeyModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configure PDF.js - disable worker for local file:// compatibility
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    }
+
+    // ========== State ==========
+    let state = {
+      apiKey: localStorage.getItem('openai_api_key') || '',
+      currentProjectId: null,
+      project: null,
+      sections: [],
+      extractedInstructions: null,
+      currentSectionIndex: -1,
+      chatHistory: [],
+      sectionChats: {}, // Store chat history per section: { sectionIndex: { messages: [], htmlContent: '' } }
+      uploadedFiles: {
+        template: null,
+        call: null,
+        instructions: null
+      }
+    };
+    
+    // ========== Per-Section Chat Management ==========
+    function saveSectionChat() {
+      if (state.currentSectionIndex < 0) return;
+      
+      const chatContainer = document.getElementById('chatMessages');
+      state.sectionChats[state.currentSectionIndex] = {
+        messages: [...state.chatHistory],
+        htmlContent: chatContainer.innerHTML
+      };
+    }
+    
+    function loadSectionChat(sectionIndex) {
+      const chatContainer = document.getElementById('chatMessages');
+      const chatData = state.sectionChats[sectionIndex];
+      
+      if (chatData && chatData.htmlContent) {
+        // Restore saved chat
+        state.chatHistory = [...(chatData.messages || [])];
+        chatContainer.innerHTML = chatData.htmlContent;
+        
+        // Re-attach event listeners for Apply buttons
+        reattachChatButtonListeners();
+      } else {
+        // New chat for this section
+        state.chatHistory = [];
+        chatContainer.innerHTML = '';
+        
+        // Add welcome message for this section
+        const sectionTitle = state.sections[sectionIndex]?.title || 'this section';
+        addChatMessage('assistant', `💬 Chat for "${sectionTitle}". Ask me to help write, improve, or review content for this section.`);
+      }
+      
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    function reattachChatButtonListeners() {
+      // Re-attach Apply button listeners after restoring HTML
+      document.querySelectorAll('.suggested-actions .btn-primary').forEach(btn => {
+        if (btn.textContent.includes('Apply') && !btn.disabled) {
+          const previewDiv = btn.closest('.chat-message')?.querySelector('.suggested-preview');
+          const codeDiv = btn.closest('.chat-message')?.querySelector('.suggested-code');
+          const content = codeDiv?.textContent || previewDiv?.innerHTML || '';
+          
+          btn.onclick = () => {
+            setEditorContent(content);
+            state.sections[state.currentSectionIndex].content = content;
+            btn.textContent = '✓ Applied!';
+            btn.disabled = true;
+            saveSectionChat();
+            addChatMessage('assistant', 'Changes applied to the editor.');
+          };
+        }
+      });
+      
+      // Re-attach toggle buttons
+      document.querySelectorAll('.btn-ghost.btn-xs').forEach(toggleBtn => {
+        const msgDiv = toggleBtn.closest('.chat-message');
+        if (!msgDiv) return;
+        
+        const previewDiv = msgDiv.querySelector('.suggested-preview');
+        const codeDiv = msgDiv.querySelector('.suggested-code');
+        if (!previewDiv || !codeDiv) return;
+        
+        toggleBtn.onclick = () => {
+          if (codeDiv.style.display === 'none') {
+            codeDiv.style.display = 'block';
+            previewDiv.style.display = 'none';
+            toggleBtn.textContent = '👁 Show Preview';
+          } else {
+            codeDiv.style.display = 'none';
+            previewDiv.style.display = 'block';
+            toggleBtn.textContent = '{ } Show HTML Code';
+          }
+        };
+      });
+      
+      // Re-attach copy buttons
+      document.querySelectorAll('.suggested-actions .btn-ghost').forEach(btn => {
+        if (btn.textContent.includes('Copy')) {
+          const codeDiv = btn.closest('.chat-message')?.querySelector('.suggested-code');
+          const content = codeDiv?.textContent || '';
+          
+          btn.onclick = () => {
+            navigator.clipboard.writeText(content);
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy', 1500);
+          };
+        }
+      });
+    }
+
+    // ========== Project Management ==========
+    function generateProjectId() {
+      return 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    function getAllProjects() {
+      const data = localStorage.getItem('proposal_writer_projects');
+      return data ? JSON.parse(data) : {};
+    }
+    
+    function saveProject(autoSave = false) {
+      if (!state.project) return;
+      
+      // Generate ID if new project
+      if (!state.currentProjectId) {
+        state.currentProjectId = generateProjectId();
+      }
+      
+      // Save current section content and chat
+      if (state.currentSectionIndex >= 0 && quillEditor) {
+        state.sections[state.currentSectionIndex].content = getEditorContent();
+        saveSectionChat();
+      }
+      
+      const projects = getAllProjects();
+      projects[state.currentProjectId] = {
+        id: state.currentProjectId,
+        name: state.project.name,
+        template: state.project.template,
+        callText: state.project.callText,
+        instructions: state.project.instructions,
+        sections: state.sections,
+        extractedInstructions: state.extractedInstructions,
+        sectionChats: state.sectionChats, // Save all section chats
+        createdAt: projects[state.currentProjectId]?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('proposal_writer_projects', JSON.stringify(projects));
+      
+      if (!autoSave) {
+        console.log('Project saved:', state.currentProjectId);
+      }
+    }
+    
+    function loadProject(projectId) {
+      const projects = getAllProjects();
+      const project = projects[projectId];
+      
+      if (!project) {
+        alert('Project not found');
+        return;
+      }
+      
+      state.currentProjectId = projectId;
+      state.project = {
+        name: project.name,
+        template: project.template,
+        callText: project.callText,
+        instructions: project.instructions
+      };
+      state.sections = project.sections || [];
+      state.extractedInstructions = project.extractedInstructions;
+      state.sectionChats = project.sectionChats || {}; // Load section chats
+      state.currentSectionIndex = -1;
+      state.chatHistory = [];
+      
+      // Update UI
+      document.getElementById('projectName').value = project.name;
+      document.getElementById('templateText').value = project.template || '';
+      document.getElementById('callText').value = project.callText || '';
+      document.getElementById('instructionsText').value = project.instructions || '';
+      
+      // Switch to editor
+      document.querySelector('[data-view="editor"]').click();
+      updateProjectHeader();
+      renderSectionList();
+      renderInstructions();
+    }
+    
+    function deleteProject(projectId) {
+      if (!confirm('Are you sure you want to delete this project?')) return;
+      
+      const projects = getAllProjects();
+      delete projects[projectId];
+      localStorage.setItem('proposal_writer_projects', JSON.stringify(projects));
+      
+      // If deleting current project, clear state
+      if (state.currentProjectId === projectId) {
+        resetCurrentProject();
+      }
+      
+      renderProjectsList();
+    }
+    
+    function clearAllProjects() {
+      if (!confirm('Are you sure you want to delete ALL projects? This cannot be undone.')) return;
+      
+      localStorage.removeItem('proposal_writer_projects');
+      resetCurrentProject();
+      renderProjectsList();
+    }
+    
+    function resetCurrentProject() {
+      state.currentProjectId = null;
+      state.project = null;
+      state.sections = [];
+      state.extractedInstructions = null;
+      state.currentSectionIndex = -1;
+      state.chatHistory = [];
+      state.sectionChats = {}; // Reset all section chats
+      
+      document.getElementById('projectName').value = '';
+      document.getElementById('templateText').value = '';
+      document.getElementById('callText').value = '';
+      document.getElementById('instructionsText').value = '';
+      document.getElementById('sectionList').innerHTML = '';
+      document.getElementById('instructionsContent').innerHTML = '<p class="instruction-empty">Create a project to see instructions.</p>';
+      setEditorContent('');
+      showEditor(false);
+      document.getElementById('editorTitle').textContent = 'Select a section';
+      document.getElementById('chatMessages').innerHTML = '';
+      
+      updateProjectHeader();
+    }
+    
+    function renderProjectsList() {
+      const container = document.getElementById('projectsList');
+      const projects = getAllProjects();
+      const projectList = Object.values(projects).sort((a, b) => 
+        new Date(b.updatedAt) - new Date(a.updatedAt)
+      );
+      
+      if (projectList.length === 0) {
+        container.innerHTML = '<p class="instruction-empty">No saved projects yet. Create a new project to get started.</p>';
+        return;
+      }
+      
+      container.innerHTML = projectList.map(p => {
+        const updatedDate = new Date(p.updatedAt).toLocaleDateString();
+        const sectionCount = p.sections?.length || 0;
+        return `
+          <div class="project-card" onclick="loadProject('${p.id}')">
+            <div class="project-icon">📄</div>
+            <div class="project-info">
+              <div class="project-name">${escapeHtml(p.name)}</div>
+              <div class="project-meta">${sectionCount} sections • Updated ${updatedDate}</div>
+            </div>
+            <div class="project-actions" onclick="event.stopPropagation()">
+              <button class="project-action-btn open" onclick="loadProject('${p.id}')">Open</button>
+              <button class="project-action-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function manualSave() {
+      saveProject();
+      const btn = document.getElementById('saveBtn');
+      btn.textContent = '✓ Saved!';
+      setTimeout(() => btn.textContent = '💾 Save', 2000);
+    }
+    
+    function updateProjectHeader() {
+      const nameEl = document.getElementById('currentProjectName');
+      if (state.project && state.project.name) {
+        nameEl.textContent = '📄 ' + state.project.name;
+        document.getElementById('saveBtn').style.display = 'inline-flex';
+        document.getElementById('exportBtn').style.display = 'inline-flex';
+      } else {
+        nameEl.textContent = 'Draft proposals with AI assistance';
+        document.getElementById('saveBtn').style.display = 'none';
+        document.getElementById('exportBtn').style.display = 'none';
+      }
+    }
+
+    // ========== Initialize Quill Rich Text Editor ==========
+    let quillEditor = null;
+    
+    function initQuill() {
+      if (quillEditor) return;
+      
+      const toolbarOptions = [
+        // Formatting
+        ['bold', 'italic', 'underline', 'strike'],
+        
+        // Headers
+        [{ 'header': [1, 2, 3, 4, false] }],
+        
+        // Font and size
+        [{ 'font': [] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        
+        // Colors
+        [{ 'color': [] }, { 'background': [] }],
+        
+        // Lists and indentation
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        
+        // Alignment
+        [{ 'align': [] }],
+        
+        // Scripts (subscript/superscript)
+        [{ 'script': 'sub'}, { 'script': 'super' }],
+        
+        // Blocks
+        ['blockquote', 'code-block'],
+        
+        // Links and media
+        ['link'],
+        
+        // Clear formatting
+        ['clean']
+      ];
+      
+      quillEditor = new Quill('#editorQuill', {
+        modules: {
+          toolbar: toolbarOptions
+        },
+        theme: 'snow',
+        placeholder: 'Start writing your section content...'
+      });
+      
+      // Auto-save on text change
+      quillEditor.on('text-change', () => {
+        if (state.currentSectionIndex >= 0) {
+          state.sections[state.currentSectionIndex].content = quillEditor.root.innerHTML;
+        }
+      });
+    }
+    
+    function getEditorContent() {
+      return quillEditor ? quillEditor.root.innerHTML : '';
+    }
+    
+    function setEditorContent(html) {
+      if (quillEditor) {
+        quillEditor.root.innerHTML = html || '';
+      }
+    }
+    
+    function showEditor(show) {
+      document.getElementById('editorContainer').classList.toggle('hidden', !show);
+      document.getElementById('editorPlaceholder').classList.toggle('hidden', show);
+    }
+
+    // ========== Tab Navigation ==========
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('view-' + tab.dataset.view).classList.add('active');
+      });
+    });
+
+    // ========== Resizable Editor/Chat Panels ==========
+    (function initResizeHandle() {
+      const handle = document.getElementById('resizeHandle');
+      const editorMain = document.querySelector('.editor-main');
+      const chatPanel = document.querySelector('.chat-panel');
+      const editorPanel = document.querySelector('.editor-panel');
+      
+      if (!handle || !editorMain || !chatPanel) return;
+      
+      let isResizing = false;
+      let startY = 0;
+      let startEditorHeight = 0;
+      let startChatHeight = 0;
+      
+      // Reset to default layout
+      function resetLayout() {
+        editorMain.style.flex = '3';
+        editorMain.style.height = '';
+        chatPanel.style.flex = '1';
+        chatPanel.style.height = '';
+        localStorage.removeItem('editor_chat_ratio');
+      }
+      
+      // Double-click to reset
+      handle.addEventListener('dblclick', resetLayout);
+      
+      handle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startY = e.clientY;
+        startEditorHeight = editorMain.offsetHeight;
+        startChatHeight = chatPanel.offsetHeight;
+        
+        document.body.style.cursor = 'ns-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+      
+      document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        
+        const deltaY = e.clientY - startY;
+        const totalHeight = startEditorHeight + startChatHeight;
+        let newEditorHeight = startEditorHeight + deltaY;
+        let newChatHeight = startChatHeight - deltaY;
+        
+        // Enforce minimum heights
+        const minEditor = 150;
+        const minChat = 220;
+        
+        if (newEditorHeight < minEditor) {
+          newEditorHeight = minEditor;
+          newChatHeight = totalHeight - minEditor;
+        }
+        if (newChatHeight < minChat) {
+          newChatHeight = minChat;
+          newEditorHeight = totalHeight - minChat;
+        }
+        
+        // Use pixel values instead of flex
+        editorMain.style.flex = 'none';
+        chatPanel.style.flex = 'none';
+        editorMain.style.height = newEditorHeight + 'px';
+        chatPanel.style.height = newChatHeight + 'px';
+      });
+      
+      document.addEventListener('mouseup', () => {
+        if (isResizing) {
+          isResizing = false;
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          
+          // Save preference (only if valid)
+          if (chatPanel.offsetHeight >= 220) {
+            localStorage.setItem('editor_chat_ratio', JSON.stringify({
+              editor: editorMain.offsetHeight,
+              chat: chatPanel.offsetHeight
+            }));
+          }
+        }
+      });
+      
+      // Clear any broken saved ratio and start fresh
+      localStorage.removeItem('editor_chat_ratio');
+      resetLayout();
+      
+      // Expose reset function globally
+      window.resetEditorLayout = resetLayout;
+    })();
+
+    // ========== API Key Modal ==========
+    function showApiKeyModal() {
+      document.getElementById('apiKeyInput').value = state.apiKey;
+      document.getElementById('apiKeyModal').classList.remove('hidden');
+    }
+    
+    function hideApiKeyModal() {
+      document.getElementById('apiKeyModal').classList.add('hidden');
+    }
+    
+    function saveApiKey() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      state.apiKey = key;
+      localStorage.setItem('openai_api_key', key);
+      hideApiKeyModal();
+    }
+
+    // ========== File Upload & Parsing ==========
+    async function handleFileUpload(input, target) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const fileInfoEl = document.getElementById(target + 'FileInfo');
+      const parsingEl = document.getElementById(target + 'Parsing');
+      const textareaEl = document.getElementById(target + 'Text');
+      
+      // Reset input immediately so same file can be selected again
+      input.value = '';
+      
+      // Show parsing indicator
+      fileInfoEl.style.display = 'none';
+      parsingEl.style.display = 'flex';
+      
+      // Small delay to let UI update
+      await new Promise(r => setTimeout(r, 50));
+      
+      try {
+        console.log('Starting to parse:', file.name);
+        const text = await parseFile(file);
+        console.log('Parsing complete, text length:', text.length);
+        
+        // Update textarea with parsed content
+        textareaEl.value = text;
+        state.uploadedFiles[target] = file.name;
+        
+        // Show file info
+        fileInfoEl.innerHTML = `
+          📎 ${file.name} (${Math.round(file.size / 1024)} KB)
+          <span class="remove-file" onclick="removeFile('${target}')">✕ Remove</span>
+        `;
+        fileInfoEl.style.display = 'flex';
+        
+      } catch (err) {
+        console.error('File upload error:', err);
+        alert('Error parsing file: ' + err.message);
+        fileInfoEl.style.display = 'none';
+      } finally {
+        parsingEl.style.display = 'none';
+      }
+    }
+    
+    function removeFile(target) {
+      document.getElementById(target + 'FileInfo').style.display = 'none';
+      document.getElementById(target + 'Text').value = '';
+      state.uploadedFiles[target] = null;
+    }
+    
+    async function parseFile(file) {
+      const name = file.name.toLowerCase();
+      const maxSize = 10 * 1024 * 1024; // 10MB limit
+      
+      if (file.size > maxSize) {
+        throw new Error('File too large. Maximum size is 10MB.');
+      }
+      
+      console.log('Parsing file:', name, 'Size:', file.size);
+      
+      if (name.endsWith('.txt')) {
+        return await file.text();
+      }
+      
+      if (name.endsWith('.pdf')) {
+        return await parsePDF(file);
+      }
+      
+      if (name.endsWith('.docx')) {
+        return await parseDOCX(file);
+      }
+      
+      if (name.endsWith('.doc')) {
+        throw new Error('Old .doc format not supported. Please save as .docx or .pdf');
+      }
+      
+      throw new Error('Unsupported file type. Use .txt, .pdf, or .docx');
+    }
+    
+    async function parsePDF(file) {
+      try {
+        if (typeof pdfjsLib === 'undefined') {
+          throw new Error('PDF library not loaded. Try refreshing the page.');
+        }
+        
+        const arrayBuffer = await file.arrayBuffer();
+        console.log('PDF arrayBuffer size:', arrayBuffer.byteLength);
+        
+        // Use disableWorker for local file:// compatibility
+        const loadingTask = pdfjsLib.getDocument({ 
+          data: arrayBuffer,
+          disableWorker: true,
+          isEvalSupported: false
+        });
+        
+        const pdf = await loadingTask.promise;
+        console.log('PDF loaded, pages:', pdf.numPages);
+        
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n\n';
+        }
+        
+        if (!fullText.trim()) {
+          throw new Error('No text found in PDF. It may be scanned/image-based.');
+        }
+        
+        return fullText.trim();
+      } catch (err) {
+        console.error('PDF parsing error:', err);
+        throw new Error('Failed to parse PDF: ' + (err.message || 'Unknown error'));
+      }
+    }
+    
+    async function parseDOCX(file) {
+      try {
+        if (typeof mammoth === 'undefined') {
+          throw new Error('DOCX library not loaded. Try refreshing the page.');
+        }
+        
+        const arrayBuffer = await file.arrayBuffer();
+        console.log('DOCX arrayBuffer size:', arrayBuffer.byteLength);
+        
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        
+        if (!result.value || !result.value.trim()) {
+          throw new Error('No text found in document.');
+        }
+        
+        return result.value;
+      } catch (err) {
+        console.error('DOCX parsing error:', err);
+        throw new Error('Failed to parse DOCX: ' + (err.message || 'Unknown error'));
+      }
+    }
+
+    // ========== OpenAI API ==========
+    async function callOpenAI(systemPrompt, userContent, temperature = 0.3, timeoutMs = 60000) {
+      if (!state.apiKey) {
+        throw new Error('Please set your OpenAI API key first (click "API Key" button)');
+      }
+      
+      console.log(`Calling OpenAI (timeout: ${timeoutMs}ms)...`);
+      const startTime = Date.now();
+      
+      // Create abort controller for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.warn('Request timeout reached, aborting...');
+        controller.abort();
+      }, timeoutMs);
+      
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${state.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            temperature,
+            max_tokens: 2500,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userContent }
+            ]
+          }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        const elapsed = Date.now() - startTime;
+        console.log(`OpenAI response received in ${elapsed}ms`);
+        
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`OpenAI error: ${res.status} - ${text.substring(0, 200)}`);
+        }
+        
+        const json = await res.json();
+        const content = json.choices?.[0]?.message?.content || '';
+        console.log(`Response length: ${content.length} chars`);
+        return content;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('Request timed out. Try using "Quick Create" or a shorter document.');
+        }
+        throw err;
+      }
+    }
+
+    // ========== Section Parsing ==========
+    // ========== AI-based Template Parsing ==========
+    async function parseTemplateWithAI(rawTemplate) {
+      // Truncate very long documents to prevent timeout
+      const truncatedTemplate = rawTemplate.substring(0, 25000);
+      
+      const systemPrompt = `Extract the table of contents / section hierarchy from this document.
+
+Return a JSON array like this:
+[{"number":"1","title":"Introduction","level":1},{"number":"1.1","title":"Background","level":2}]
+
+Rules:
+- Extract ALL numbered sections exactly as they appear
+- "level": 1=main section, 2=subsection, 3=sub-subsection
+- ONLY return the JSON array, nothing else`;
+
+      const response = await callOpenAI(systemPrompt, truncatedTemplate, 0.05, 45000);
+      
+      // Parse the JSON response with repair
+      const parsed = parseJSONResponse(response, 'array');
+      
+      if (!parsed || parsed.length === 0) {
+        throw new Error('No sections found. Please try again.');
+      }
+      
+      // Convert to our section format
+      return parsed.map((item, index) => ({
+        title: `${item.number || ''} ${item.title || 'Untitled'}`.trim(),
+        level: item.level || 1,
+        order: index + 1,
+        content: ''
+      }));
+    }
+    
+    // Robust JSON parser with repair capability
+    function parseJSONResponse(response, type = 'object') {
+      console.log('Parsing response (first 500 chars):', response.substring(0, 500));
+      
+      // Clean up the response - remove markdown code blocks if present
+      let cleaned = response.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      
+      // Try to extract JSON
+      let jsonStr;
+      if (type === 'array') {
+        const match = cleaned.match(/\[[\s\S]*\]/);
+        jsonStr = match ? match[0] : null;
+        
+        // If no complete array found, try to find start of array
+        if (!jsonStr && cleaned.includes('[')) {
+          jsonStr = cleaned.substring(cleaned.indexOf('['));
+        }
+      } else {
+        const match = cleaned.match(/\{[\s\S]*\}/);
+        jsonStr = match ? match[0] : null;
+        
+        if (!jsonStr && cleaned.includes('{')) {
+          jsonStr = cleaned.substring(cleaned.indexOf('{'));
+        }
+      }
+      
+      if (!jsonStr) {
+        console.error('No JSON found in response');
+        return null;
+      }
+      
+      // Try parsing directly first
+      try {
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.log('Direct parse failed:', e.message, '- attempting repair...');
+      }
+      
+      // Attempt to repair common issues
+      try {
+        let repaired = jsonStr;
+        
+        if (type === 'array') {
+          // Strategy 1: Find last complete object and close array
+          // Look for pattern like "},{"  or "}," to find object boundaries
+          const objectBoundaries = [...repaired.matchAll(/\}(?=\s*,|\s*\])/g)];
+          
+          if (objectBoundaries.length > 0) {
+            // Find the last complete object
+            const lastGoodPos = objectBoundaries[objectBoundaries.length - 1].index;
+            repaired = repaired.substring(0, lastGoodPos + 1) + ']';
+          } else {
+            // Fallback: find last } and close
+            const lastBrace = repaired.lastIndexOf('}');
+            if (lastBrace > 0) {
+              repaired = repaired.substring(0, lastBrace + 1) + ']';
+            }
+          }
+        } else {
+          // For objects, count and balance braces
+          const openBraces = (repaired.match(/\{/g) || []).length;
+          const closeBraces = (repaired.match(/\}/g) || []).length;
+          repaired += '}'.repeat(Math.max(0, openBraces - closeBraces));
+          
+          // Balance brackets too
+          const openBrackets = (repaired.match(/\[/g) || []).length;
+          const closeBrackets = (repaired.match(/\]/g) || []).length;
+          repaired += ']'.repeat(Math.max(0, openBrackets - closeBrackets));
+        }
+        
+        // Remove trailing commas before ] or }
+        repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+        
+        // Remove incomplete key-value pairs at the end
+        repaired = repaired.replace(/,\s*"[^"]*":\s*$/g, '');
+        repaired = repaired.replace(/,\s*"[^"]*":\s*"[^"]*$/g, '');
+        
+        console.log('Attempting to parse repaired JSON...');
+        return JSON.parse(repaired);
+      } catch (e) {
+        console.error('JSON repair failed:', e.message);
+        
+        // Last resort: try to extract individual objects and rebuild
+        try {
+          if (type === 'array') {
+            const objects = [];
+            const objRegex = /\{[^{}]*\}/g;
+            let match;
+            while ((match = objRegex.exec(jsonStr)) !== null) {
+              try {
+                objects.push(JSON.parse(match[0]));
+              } catch (e2) { /* skip malformed objects */ }
+            }
+            if (objects.length > 0) {
+              console.log('Recovered', objects.length, 'objects via extraction');
+              return objects;
+            }
+          }
+        } catch (e3) {
+          console.error('Object extraction also failed');
+        }
+        
+        return null;
+      }
+    }
+    
+    // Fallback: simple regex-based parsing (used if AI fails)
+    function parseTemplateSimple(rawTemplate) {
+      const lines = rawTemplate.split('\n');
+      const sections = [];
+      let currentSection = null;
+      let order = 0;
+      const sectionRegex = /^(#{1,3}|\*\*|__)?[\s]*(\d+\.?\d*\.?\d*\.?)[\s]*(.+?)(\*\*|__)?$/;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        const match = sectionRegex.exec(trimmed);
+        if (match && match[2] && match[3]) {
+          if (currentSection) sections.push(currentSection);
+          order++;
+          currentSection = {
+            title: `${match[2]} ${match[3].replace(/\*\*/g, '').replace(/__/g, '')}`.trim(),
+            order,
+            level: (match[2].match(/\./g) || []).length + 1,
+            content: ''
+          };
+        } else if (currentSection) {
+          currentSection.content += line + '\n';
+        }
+      }
+      if (currentSection) sections.push(currentSection);
+      
+      if (sections.length === 0) {
+        sections.push({ title: 'Document', order: 1, level: 1, content: rawTemplate });
+      }
+      
+      return sections;
+    }
+
+    // ========== Create Project ==========
+    async function createProject(extractInstructions = true) {
+      const name = document.getElementById('projectName').value.trim();
+      const template = document.getElementById('templateText').value.trim();
+      const callText = document.getElementById('callText').value.trim();
+      const instructions = document.getElementById('instructionsText').value.trim();
+      
+      const errorEl = document.getElementById('setupError');
+      const btn = document.getElementById('createProjectBtn');
+      const quickBtn = document.getElementById('quickCreateBtn');
+      
+      if (!name) {
+        errorEl.textContent = 'Please enter a project name.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (!template) {
+        errorEl.textContent = 'Please enter a template (paste text or upload a file).';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      quickBtn.disabled = true;
+      
+      // Progress indicator function
+      const updateProgress = (msg) => {
+        btn.innerHTML = `<span class="spinner"></span> ${msg}`;
+      };
+      
+      const totalSteps = extractInstructions ? 3 : 2;
+      updateProgress(`Step 1/${totalSteps}: Analyzing document structure...`);
+      
+      try {
+        // Parse sections with AI
+        try {
+          state.sections = await parseTemplateWithAI(template);
+          console.log('AI parsed sections:', state.sections);
+        } catch (aiErr) {
+          console.warn('AI parsing failed, using fallback:', aiErr);
+          state.sections = parseTemplateSimple(template);
+        }
+        
+        updateProgress(`Step 2/${totalSteps}: Found ${state.sections.length} sections...`);
+        
+        if (state.sections.length === 0) {
+          throw new Error('No sections found in the template.');
+        }
+        
+        state.project = { name, template, callText, instructions };
+        
+        // Extract instructions with AI (if requested and documents provided)
+        if (extractInstructions && (callText || instructions)) {
+          updateProgress(`Step 3/${totalSteps}: Extracting instructions...`);
+          try {
+            const sectionTitles = state.sections.map(s => s.title);
+            state.extractedInstructions = await extractInstructionsWithAI(callText, instructions, sectionTitles);
+            console.log('Extracted instructions:', state.extractedInstructions);
+          } catch (instrErr) {
+            console.warn('Instruction extraction failed:', instrErr);
+            // Continue with empty instructions rather than failing completely
+            state.extractedInstructions = {
+              generalInstructions: { 
+                evaluationCriteria: [], deadlines: [], formattingRules: [], 
+                requiredDocuments: [], importantNotes: ['Automatic instruction extraction failed. Please review documents manually.']
+              },
+              sections: []
+            };
+          }
+        } else {
+          // Create empty structure
+          const level1and2 = state.sections.filter(s => {
+            const numMatch = s.title.match(/^(\d+(?:\.\d+)?)/);
+            if (!numMatch) return true;
+            const dots = (numMatch[1].match(/\./g) || []).length;
+            return dots <= 1;
+          });
+          
+          state.extractedInstructions = {
+            generalInstructions: { 
+              evaluationCriteria: [], deadlines: [], formattingRules: [], 
+              requiredDocuments: [], importantNotes: extractInstructions ? [] : ['Instructions not extracted. Use "Create Project & Extract Instructions" to analyze documents.']
+            },
+            sections: level1and2.map(s => {
+              const numMatch = s.title.match(/^(\d+(?:\.\d+)?)/);
+              return { 
+                sectionNumber: numMatch ? numMatch[1] : '',
+                sectionTitle: s.title,
+                mustInclude: [], shouldInclude: [], specificRequirements: [], 
+                evaluationWeight: '', pageWordLimit: '', scoringCriteria: [],
+                tips: [], warnings: []
+              };
+            })
+          };
+        }
+        
+        // This is a new project, reset ID
+        state.currentProjectId = null;
+        
+        // Save the project
+        saveProject();
+        
+        // Switch to editor
+        document.querySelector('[data-view="editor"]').click();
+        updateProjectHeader();
+        renderSectionList();
+        renderInstructions();
+        
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        quickBtn.disabled = false;
+        btn.textContent = 'Create Project & Extract Instructions';
+      }
+    }
+
+    // ========== Extract Instructions ==========
+    async function extractInstructionsWithAI(callText, instructionsText, sectionTitles) {
+      // Filter to only level 1 and 2 sections
+      const level1and2Sections = sectionTitles.filter(title => {
+        const numMatch = title.match(/^(\d+(?:\.\d+)?)/);
+        if (!numMatch) return true;
+        return (numMatch[1].match(/\./g) || []).length <= 1;
+      }).slice(0, 20); // Limit sections
+      
+      // Truncate very long documents
+      const callTrunc = (callText || '').substring(0, 15000);
+      const instrTrunc = (instructionsText || '').substring(0, 10000);
+      
+      const systemPrompt = `Extract requirements from these proposal documents. Return a JSON object with:
+
+1. "generalInstructions": Object with these arrays (include ALL you find):
+   - "evaluationCriteria": How proposals are scored
+   - "deadlines": All dates and deadlines
+   - "formattingRules": Fonts, margins, page limits
+   - "requiredDocuments": What must be submitted
+   - "importantNotes": Other key requirements
+
+2. "sections": Array of objects for main sections:
+   - "sectionNumber": e.g. "1", "2.1"
+   - "sectionTitle": Section name
+   - "mustInclude": What MUST be in this section
+   - "tips": Suggestions
+
+Return ONLY valid JSON. Be concise.`;
+
+      const userContent = `CALL TEXT:\n${callTrunc}\n\nINSTRUCTIONS:\n${instrTrunc}\n\nSECTIONS:\n${level1and2Sections.join(', ')}`;
+      
+      const response = await callOpenAI(systemPrompt, userContent, 0.1, 60000);
+      
+      // Parse with repair
+      const result = parseJSONResponse(response, 'object');
+      
+      if (!result) {
+        // Return empty structure if parsing fails
+        console.warn('Instruction extraction failed, using empty structure');
+        return {
+          generalInstructions: {
+            evaluationCriteria: [],
+            deadlines: [],
+            formattingRules: [],
+            requiredDocuments: [],
+            importantNotes: ['Could not extract instructions. Please review documents manually.']
+          },
+          sections: []
+        };
+      }
+      
+      return result;
+    }
+
+    // ========== Render Section List ==========
+    function renderSectionList() {
+      const container = document.getElementById('sectionList');
+      container.innerHTML = state.sections.map((s, i) => {
+        const level = s.level || 1;
+        const indent = (level - 1) * 16; // 16px per level
+        const fontSize = level === 1 ? '14px' : level === 2 ? '13px' : '12px';
+        const fontWeight = level === 1 ? '600' : '400';
+        const hasChat = state.sectionChats[i] && state.sectionChats[i].messages && state.sectionChats[i].messages.length > 0;
+        const chatIndicator = hasChat ? '<span class="chat-indicator" title="Has chat history">💬</span>' : '';
+        return `
+          <button class="section-item ${i === state.currentSectionIndex ? 'active' : ''}" 
+                  onclick="selectSection(${i})"
+                  style="padding-left: ${12 + indent}px; font-size: ${fontSize}; font-weight: ${fontWeight};">
+            <span class="section-title-text">${s.title}</span>
+            ${chatIndicator}
+          </button>
+        `;
+      }).join('');
+    }
+
+    // ========== Select Section ==========
+    function selectSection(index) {
+      // Initialize Quill if not done
+      initQuill();
+      
+      // Save current section content and chat
+      if (state.currentSectionIndex >= 0) {
+        state.sections[state.currentSectionIndex].content = getEditorContent();
+        saveSectionChat(); // Save current section's chat
+      }
+      
+      state.currentSectionIndex = index;
+      
+      const section = state.sections[index];
+      document.getElementById('editorTitle').textContent = section.title;
+      
+      // Set content in Quill
+      setEditorContent(section.content);
+      showEditor(true);
+      
+      // Load this section's chat (or create new one)
+      loadSectionChat(index);
+      
+      renderSectionList();
+      renderInstructions();
+    }
+
+    // ========== Render Instructions ==========
+    function renderInstructions() {
+      const container = document.getElementById('instructionsContent');
+      if (!state.extractedInstructions) {
+        container.innerHTML = '<p class="instruction-empty">Create a project to see instructions.</p>';
+        return;
+      }
+      
+      const general = state.extractedInstructions.generalInstructions || {};
+      
+      // Find section-specific instructions
+      let sectionInstr = null;
+      let parentSectionInstr = null;
+      let currentSectionNumber = '';
+      
+      if (state.currentSectionIndex >= 0) {
+        const currentTitle = state.sections[state.currentSectionIndex].title;
+        
+        // Extract section number (e.g., "2.1.3" from "2.1.3 Methodology Details")
+        const numMatch = currentTitle.match(/^(\d+(?:\.\d+)*)/);
+        currentSectionNumber = numMatch ? numMatch[1] : '';
+        
+        // Find exact match or parent match
+        if (currentSectionNumber && state.extractedInstructions.sections) {
+          // Try exact match first
+          sectionInstr = state.extractedInstructions.sections.find(s => 
+            s.sectionNumber === currentSectionNumber || 
+            (s.sectionTitle && s.sectionTitle.startsWith(currentSectionNumber + ' '))
+          );
+          
+          // If no exact match, find parent section (level 1 or 2)
+          if (!sectionInstr) {
+            const parts = currentSectionNumber.split('.');
+            
+            // Try level 2 parent (e.g., "2.1" for "2.1.3")
+            if (parts.length >= 2) {
+              const level2Num = parts.slice(0, 2).join('.');
+              parentSectionInstr = state.extractedInstructions.sections.find(s => 
+                s.sectionNumber === level2Num ||
+                (s.sectionTitle && s.sectionTitle.startsWith(level2Num + ' '))
+              );
+            }
+            
+            // If still no match, try level 1 parent (e.g., "2" for "2.1.3")
+            if (!parentSectionInstr && parts.length >= 1) {
+              const level1Num = parts[0];
+              parentSectionInstr = state.extractedInstructions.sections.find(s => 
+                s.sectionNumber === level1Num ||
+                (s.sectionTitle && s.sectionTitle.startsWith(level1Num + ' '))
+              );
+            }
+          }
+        }
+        
+        // Fallback: try matching by title keywords
+        if (!sectionInstr && !parentSectionInstr) {
+          const titleWords = currentTitle.replace(/[\d.]/g, '').trim().toLowerCase();
+          sectionInstr = state.extractedInstructions.sections?.find(s => {
+            const sectionWords = (s.sectionTitle || '').replace(/[\d.]/g, '').trim().toLowerCase();
+            return titleWords.includes(sectionWords) || sectionWords.includes(titleWords);
+          });
+        }
+      }
+      
+      // Use parent instructions if no direct match
+      const displayInstr = sectionInstr || parentSectionInstr;
+      const isParent = !sectionInstr && parentSectionInstr;
+      
+      let html = '';
+      
+      // Section-specific instructions FIRST (when a section is selected)
+      if (displayInstr) {
+        html += '<div class="instructions-group section-specific">';
+        html += `<div class="instructions-group-header">
+          <span class="instructions-group-icon">📌</span>
+          <span>${isParent ? 'Parent Section: ' + (displayInstr.sectionNumber || '') : 'This Section'}</span>
+        </div>`;
+        
+        if (isParent) {
+          html += `<div class="instruction-note">Showing instructions from parent section ${displayInstr.sectionNumber || displayInstr.sectionTitle}</div>`;
+        }
+        
+        if (displayInstr.pageWordLimit) {
+          html += `<div class="instruction-highlight">📏 ${displayInstr.pageWordLimit}</div>`;
+        }
+        if (displayInstr.evaluationWeight) {
+          html += `<div class="instruction-highlight weight">⚖️ ${displayInstr.evaluationWeight}</div>`;
+        }
+        
+        html += renderInstructionSection('Must Include', displayInstr.mustInclude, '✅');
+        html += renderInstructionSection('Should Include', displayInstr.shouldInclude, '📝');
+        html += renderInstructionSection('Requirements', displayInstr.specificRequirements, '📋');
+        html += renderInstructionSection('Scoring Criteria', displayInstr.scoringCriteria, '⭐');
+        html += renderInstructionSection('Tips', displayInstr.tips, '💡');
+        html += renderInstructionSection('Avoid', displayInstr.warnings, '⚠️');
+        
+        // Backward compatibility
+        html += renderInstructionSection('Expected Content', displayInstr.expectedContent, '📝');
+        
+        html += '</div>';
+      } else if (state.currentSectionIndex >= 0) {
+        html += '<div class="instructions-group section-specific">';
+        html += `<div class="instructions-group-header">
+          <span class="instructions-group-icon">📌</span>
+          <span>This Section</span>
+        </div>`;
+        html += '<p class="instruction-empty">No specific instructions found for this section. Check general instructions below.</p>';
+        html += '</div>';
+      }
+      
+      // General instructions (collapsible)
+      html += '<div class="instructions-group general">';
+      html += `<div class="instructions-group-header" onclick="toggleGeneralInstructions()">
+        <span class="instructions-group-icon">📋</span>
+        <span>General Instructions</span>
+        <span class="collapse-icon" id="generalCollapseIcon">▼</span>
+      </div>`;
+      html += '<div id="generalInstructionsBody">';
+      
+      html += renderInstructionSection('Evaluation Criteria', general.evaluationCriteria, '⭐');
+      html += renderInstructionSection('Submission Requirements', general.submissionRequirements, '📤');
+      html += renderInstructionSection('Formatting Rules', general.formattingRules, '📐');
+      html += renderInstructionSection('Page/Word Limits', general.pageWordLimits, '📏');
+      html += renderInstructionSection('Deadlines', general.deadlines, '📅');
+      html += renderInstructionSection('Budget Constraints', general.budgetConstraints, '💰');
+      html += renderInstructionSection('Required Documents', general.requiredDocuments, '📎');
+      html += renderInstructionSection('Legal/Compliance', general.legalCompliance, '⚖️');
+      html += renderInstructionSection('Eligibility', general.eligibilityCriteria, '✅');
+      html += renderInstructionSection('Keywords to Use', general.recommendedKeywords, '🔑');
+      html += renderInstructionSection('Do NOT Include', general.doNotInclude, '🚫');
+      html += renderInstructionSection('Important Notes', general.importantNotes, 'ℹ️');
+      
+      // Backward compatibility
+      html += renderInstructionSection('Requirements', general.requirements, '✓');
+      
+      html += '</div></div>';
+      
+      container.innerHTML = html || '<p class="instruction-empty">No instructions extracted.</p>';
+    }
+    
+    function toggleGeneralInstructions() {
+      const body = document.getElementById('generalInstructionsBody');
+      const icon = document.getElementById('generalCollapseIcon');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.textContent = '▼';
+      } else {
+        body.style.display = 'none';
+        icon.textContent = '▶';
+      }
+    }
+    
+    function renderInstructionSection(title, items, icon = '') {
+      if (!items || items.length === 0) return '';
+      return `
+        <div class="instruction-section">
+          <div class="instruction-section-title">${icon} ${title}</div>
+          ${items.map(item => `<div class="instruction-item">${item}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    // ========== AI Chat ==========
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = '';
+      await processAIRequest(message);
+    }
+    
+    async function aiAction(action) {
+      await processAIRequest(action);
+    }
+    
+    async function processAIRequest(userMessage) {
+      if (state.currentSectionIndex < 0) {
+        alert('Please select a section first.');
+        return;
+      }
+      
+      const section = state.sections[state.currentSectionIndex];
+      const currentContent = getEditorContent();
+      
+      // Add user message to chat
+      addChatMessage('user', userMessage);
+      
+      // Add thinking indicator
+      const thinkingId = addChatMessage('assistant', '...', true);
+      
+      // Disable actions
+      document.querySelectorAll('.chat-action').forEach(btn => btn.disabled = true);
+      document.getElementById('chatInput').disabled = true;
+      
+      try {
+        const general = state.extractedInstructions?.generalInstructions || {};
+        const sectionInstr = state.extractedInstructions?.sections.find(s => 
+          s.sectionTitle.toLowerCase() === section.title.toLowerCase()
+        ) || {};
+        
+        // Build conversation history for context
+        const conversationContext = state.chatHistory.slice(-6).map(m => 
+          `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
+        ).join('\n\n');
+        
+        const systemPrompt = `You are an expert proposal writer assistant. You help users improve their proposal sections through conversation.
+
+IMPORTANT RULES:
+1. Have a natural conversation - discuss, explain, suggest
+2. When the user asks for improvements or rewrites, provide TWO things:
+   a) A brief explanation of your changes
+   b) The suggested new text wrapped in <suggested_text>...</suggested_text> tags
+3. When the user asks questions or wants to discuss, just respond conversationally (no suggested_text tags)
+4. Be helpful, concise, and professional
+5. Consider the evaluation criteria and requirements when giving advice
+
+Current section: "${section.title}"
+Section requirements: ${JSON.stringify(sectionInstr)}
+General requirements: ${JSON.stringify(general)}`;
+
+        const userContent = `Current section content:
+"""
+${currentContent || '(empty)'}
+"""
+
+${conversationContext ? `Recent conversation:\n${conversationContext}\n\n` : ''}User: ${userMessage}`;
+
+        const response = await callOpenAI(systemPrompt, userContent, 0.7);
+        
+        // Remove thinking indicator
+        removeChatMessage(thinkingId);
+        
+        // Store in history
+        state.chatHistory.push({ role: 'user', content: userMessage });
+        state.chatHistory.push({ role: 'assistant', content: response });
+        
+        // Check if response contains suggested text
+        const suggestedMatch = response.match(/<suggested_text>([\s\S]*?)<\/suggested_text>/);
+        
+        if (suggestedMatch) {
+          // Extract the explanation (text before the tag)
+          const explanation = response.replace(/<suggested_text>[\s\S]*?<\/suggested_text>/, '').trim();
+          const suggestedText = suggestedMatch[1].trim();
+          
+          // Show explanation
+          if (explanation) {
+            addChatMessage('assistant', explanation);
+          }
+          
+          // Show suggested text with Apply button
+          addChatMessageWithApply('assistant', suggestedText);
+        } else {
+          // Just a conversational response
+          addChatMessage('assistant', response);
+        }
+        
+        // Save chat after AI response
+        saveSectionChat();
+        
+      } catch (err) {
+        removeChatMessage(thinkingId);
+        addChatMessage('assistant', '❌ Error: ' + err.message);
+        saveSectionChat();
+      } finally {
+        document.querySelectorAll('.chat-action').forEach(btn => btn.disabled = false);
+        document.getElementById('chatInput').disabled = false;
+        document.getElementById('chatInput').focus();
+      }
+    }
+    
+    let chatMessageCounter = 0;
+    
+    function addChatMessage(role, content, isThinking = false) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      const messageId = 'chat-msg-' + (++chatMessageCounter);
+      div.id = messageId;
+      div.className = `chat-message ${role}${isThinking ? ' thinking' : ''}`;
+      div.textContent = content;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return messageId;
+    }
+    
+    function removeChatMessage(messageId) {
+      const el = document.getElementById(messageId);
+      if (el) el.remove();
+    }
+    
+    function addChatMessageWithApply(role, suggestedText) {
+      const container = document.getElementById('chatMessages');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chat-message-wrapper';
+      
+      const div = document.createElement('div');
+      div.className = `chat-message ${role} suggested`;
+      
+      const label = document.createElement('div');
+      label.className = 'suggested-label';
+      label.textContent = '📝 Suggested text:';
+      div.appendChild(label);
+      
+      // Create preview area that renders HTML
+      const previewDiv = document.createElement('div');
+      previewDiv.className = 'suggested-preview';
+      previewDiv.innerHTML = suggestedText; // Render HTML
+      div.appendChild(previewDiv);
+      
+      // Toggle to show/hide raw code
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'btn btn-ghost btn-xs';
+      toggleBtn.textContent = '{ } Show HTML Code';
+      toggleBtn.style.marginTop = '8px';
+      toggleBtn.style.fontSize = '11px';
+      
+      const codeDiv = document.createElement('div');
+      codeDiv.className = 'suggested-code';
+      codeDiv.style.display = 'none';
+      codeDiv.textContent = suggestedText; // Show raw code
+      div.appendChild(codeDiv);
+      
+      toggleBtn.onclick = () => {
+        if (codeDiv.style.display === 'none') {
+          codeDiv.style.display = 'block';
+          previewDiv.style.display = 'none';
+          toggleBtn.textContent = '👁 Show Preview';
+        } else {
+          codeDiv.style.display = 'none';
+          previewDiv.style.display = 'block';
+          toggleBtn.textContent = '{ } Show HTML Code';
+        }
+      };
+      div.appendChild(toggleBtn);
+      
+      const btnRow = document.createElement('div');
+      btnRow.className = 'suggested-actions';
+      
+      const applyBtn = document.createElement('button');
+      applyBtn.className = 'btn btn-primary btn-sm';
+      applyBtn.textContent = '✓ Apply to Editor';
+      applyBtn.onclick = () => {
+        setEditorContent(suggestedText);
+        state.sections[state.currentSectionIndex].content = suggestedText;
+        applyBtn.textContent = '✓ Applied!';
+        applyBtn.disabled = true;
+        saveSectionChat(); // Save chat state
+        addChatMessage('assistant', 'Changes applied to the editor.');
+      };
+      btnRow.appendChild(applyBtn);
+      
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'btn btn-secondary btn-sm';
+      copyBtn.textContent = '📋 Copy';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(suggestedText);
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
+      };
+      btnRow.appendChild(copyBtn);
+      
+      div.appendChild(btnRow);
+      wrapper.appendChild(div);
+      container.appendChild(wrapper);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // ========== Export to Word ==========
+    async function exportToWord() {
+      // Save current section
+      if (state.currentSectionIndex >= 0 && quillEditor) {
+        state.sections[state.currentSectionIndex].content = getEditorContent();
+      }
+      
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+      
+      const children = [];
+      
+      // Title
+      children.push(new Paragraph({
+        text: state.project.name,
+        heading: HeadingLevel.TITLE,
+        spacing: { after: 400 }
+      }));
+      
+      // Sections with proper heading levels
+      for (const section of state.sections) {
+        const level = section.level || 1;
+        const headingLevel = level === 1 ? HeadingLevel.HEADING_1 
+                           : level === 2 ? HeadingLevel.HEADING_2 
+                           : level === 3 ? HeadingLevel.HEADING_3 
+                           : HeadingLevel.HEADING_4;
+        const spaceBefore = level === 1 ? 400 : level === 2 ? 300 : 200;
+        
+        children.push(new Paragraph({
+          text: section.title,
+          heading: headingLevel,
+          spacing: { before: spaceBefore, after: 200 }
+        }));
+        
+        // Convert HTML content to plain text paragraphs
+        const plainText = htmlToPlainText(section.content);
+        const paragraphs = plainText.split('\n').filter(p => p.trim());
+        for (const para of paragraphs) {
+          if (para.trim()) {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: para.trim() })],
+              spacing: { after: 200 }
+            }));
+          }
+        }
+      }
+      
+      function htmlToPlainText(html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        // Replace <br> and block elements with newlines
+        temp.querySelectorAll('br, p, div, li').forEach(el => {
+          el.insertAdjacentText('afterend', '\n');
+        });
+        // Add bullet points for lists
+        temp.querySelectorAll('li').forEach(el => {
+          el.insertAdjacentText('beforebegin', '• ');
+        });
+        return temp.textContent || '';
+      }
+      
+      const doc = new Document({ sections: [{ children }] });
+      const blob = await Packer.toBlob(doc);
+      
+      // Download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${state.project.name.replace(/[^a-z0-9]/gi, '_')}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // ========== Auto-save to localStorage ==========
+    setInterval(() => {
+      if (state.project && state.currentProjectId) {
+        saveProject(true); // auto-save
+      }
+    }, 10000); // Every 10 seconds
+
+    // ========== Initialize on Load ==========
+    window.addEventListener('load', () => {
+      // Clear old single-project storage (migration)
+      localStorage.removeItem('proposal_writer_state');
+      
+      // Hide editor, show placeholder initially
+      document.getElementById('editorContainer').classList.add('hidden');
+      document.getElementById('editorPlaceholder').classList.remove('hidden');
+      
+      // Render projects list
+      renderProjectsList();
+      
+      // Check API key
+      if (!state.apiKey) {
+        setTimeout(showApiKeyModal, 500);
+      }
+    });
+  </script>
+</body>
+</html>
